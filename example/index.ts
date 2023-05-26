@@ -24,7 +24,7 @@ const unwatchCallback = fs.watch(path => console.log(`${path} has changed`));
 // Do not directly use any other FileSystem methods other than those above.
 // From now on, we only use the Path API.
 
-// Do not create Path instances directly, the Path constructor is private.
+// Usually, there is no need to use the Path constructor directly.
 // Instead, get the root of the FileSystem.
 const root = Path.getRoot(fs);
 
@@ -68,35 +68,37 @@ subfolder.addFile("!§$%&/()=?`´ ^°+*~#'{[]}\\,;.:-_<>|09", { n: 0, b: false }
 unwatchCallback();
 
 // Copy a file to another folder.
-const copied = file.copy(root, file.getName());
+const copyDestination = root.getChild(file.getName())
+const copied = file.copy(copyDestination);
 if (!copied) throw new Error("Copying file failed!");
 
 // Move it back to the original folder.
-// Fails, since there already exists a file with this name. Returns undefined.
-console.log(copied.move(subfolder, copied.getName()));
+// Fails, since there already exists a file with this name. Returns false.
+console.log(copyDestination.move(subfolder.getChild(file.getName())));
 
 // Move it back to the original folder, but change the name.
-const moved = copied.move(subfolder, "new file name");
+const moveDestination = subfolder.getChild("new file name");
+const moved = copyDestination.move(moveDestination);
 if (!moved) throw new Error("Moving file failed!");
 
 // Rename the file.
-const renamed = moved.rename("another file name");
+const renamed = moveDestination.rename("another file name");
 if (!renamed) throw new Error("Renaming file failed!");
 
 // Get the data of the file.
-const data = renamed.getData();
+const data = file.getData();
 if (!data) throw new Error("Something went wrong!");
 
 // Update the data of the file.
-renamed.setData({ n: -1, s: "baz", b: false });
+file.setData({ n: -1, s: "baz", b: false });
 
-// Get the files of the subfolder.
-const files = subfolder.getFiles();
-if (!files) throw new Error("Something went wrong!");
+// Get the children of the subfolder.
+const children = subfolder.getChildren();
+if (!children) throw new Error("Something went wrong!");
 
-// Show information about the files.
+// Show information about the children.
 // [ 'my_file', '!§$%&/()=?`´ ^°+*~#'{[]}\,;.:-_<>|09', 'another file name' ]
-console.log(files.map(path => path.getName()));
+console.log(children.map(path => path.getName()));
 
 // Delete a file.
 if (file.delete()) console.log("File successfully deleted.")

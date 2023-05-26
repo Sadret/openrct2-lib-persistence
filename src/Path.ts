@@ -35,7 +35,7 @@ export class Path<T> {
             return true;
         if (fst === undefined || snd === undefined)
             return false;
-        return fst.path === snd.path;
+        return fst.fs === snd.fs && fst.path === snd.path;
     }
 
     /**
@@ -60,7 +60,7 @@ export class Path<T> {
     }
 
     /** Gets the child path of a file or folder with the given name. */
-    public getChild(name: string): Path<T> { return new Path(this.fs, this.fs.getPath(this.path, name)); }
+    public getChild(name: string): Path<T> { return new Path(this.fs, this.fs.getChild(this.path, name)); }
 
     /** Checks if the file or folder exists. */
     public exists(): boolean { return this.fs.exists(this.path); };
@@ -72,8 +72,8 @@ export class Path<T> {
     public isFile(): boolean { return this.fs.isFile(this.path); };
 
     /** Gets contained files if this path represents a folder and undefined otherwise. */
-    public getFiles(): Path<T>[] | undefined {
-        const files = this.fs.getFiles(this.path);
+    public getChildren(): Path<T>[] | undefined {
+        const files = this.fs.getChildren(this.path);
         return files && files.map(path => new Path(this.fs, path));
     };
 
@@ -88,8 +88,8 @@ export class Path<T> {
         Returns the path of the new folder, or undefined if the operation failed.
     */
     public addFolder(name: string): Path<T> | undefined {
-        const folder = this.fs.getPath(this.path, name);
-        return this.fs.createFolder(folder) ? new Path(this.fs, folder) : undefined;
+        const path = this.getChild(name);
+        return path.createFolder() ? path : undefined;
     };
 
     /**
@@ -97,8 +97,8 @@ export class Path<T> {
         Returns the path of the new file, or undefined if the operation failed.
     */
     public addFile(name: string, content: T): Path<T> | undefined {
-        const path = this.fs.getPath(this.path, name);
-        return this.fs.createFile(path, content) ? new Path(this.fs, path) : undefined;
+        const path = this.getChild(name);
+        return path.createFile(content) ? path : undefined;
     };
 
     /** Creates a folder at this path. */
@@ -115,34 +115,21 @@ export class Path<T> {
 
     /**
         Copies the file or folder to a destination given by a parent and a name.
-        Returns the path of the new file, or undefined if the operation failed.
+        Returns if the operation succeeded.
     */
-    public copy(parent: Path<T>, name: string = this.getName()): Path<T> | undefined {
-        const path = this.fs.getPath(parent.path, name);
-        return this.fs.copy(this.path, path) ? new Path(this.fs, path) : undefined;
-    };
+    public copy(destination: Path<T>): boolean { return this.fs.copy(this.path, destination.path); };
 
     /**
         Moves the file or folder to a destination given by a parent and a name.
-        Returns the path of the new file, or undefined if the operation failed.
+        Returns if the operation succeeded.
     */
-    public move(parent: Path<T>, name: string = this.getName()): Path<T> | undefined {
-        const path = this.fs.getPath(parent.path, name);
-        return this.fs.move(this.path, path) ? new Path(this.fs, path) : undefined;
-    };
+    public move(destination: Path<T>): boolean { return this.fs.move(this.path, destination.path); };
 
     /**
         Renames the file or folder.
-        Returns the path of the new file, or undefined if the operation failed.
+        Returns if the operation succeeded.
     */
-    public rename(name: string): Path<T> | undefined {
-        if (this.fs.rename(this.path, name)) {
-            const parent = this.getParent();
-            if (parent !== undefined) // if this fails, the fs made a mistake
-                return new Path(this.fs, this.fs.getPath(parent.path, name));
-        }
-        return undefined;
-    };
+    public rename(name: string): boolean { return this.fs.rename(this.path, name); };
 
     /**
         If this path represents a file, then sets the data of the file.

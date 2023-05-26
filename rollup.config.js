@@ -6,17 +6,19 @@ import typescript from "@rollup/plugin-typescript";
 export default [{
 		input: "./src/index.ts",
 		output: [{
-				file: "./build/index.esm.js",
+				file: "./build/openrct2-lib-persistence.esm.js",
 				format: "esm",
 				exports: "named",
 				preserveModules: false,
+				sourcemap: true,
 			},
 			{
-				file: "./build/index.cjs.js",
+				file: "./build/openrct2-lib-persistence.cjs.js",
 				format: "cjs",
+				sourcemap: true,
 			},
 			{
-				file: "./build/index.es5.js",
+				file: "./build/openrct2-lib-persistence.es5.js",
 				format: "iife",
 				name: "openrct2_lib_persistence",
 				sourcemap: true,
@@ -35,7 +37,7 @@ export default [{
 	{
 		input: "./src/index.ts",
 		output: {
-			file: "./build/index.d.ts",
+			file: "./build/openrct2-lib-persistence.d.ts",
 			format: "esm",
 		},
 		plugins: [

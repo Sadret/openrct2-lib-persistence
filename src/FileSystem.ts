@@ -38,6 +38,9 @@ export interface FileSystem<T> {
     /** Gets the parent path of a path. Returns undefined if the path is the root path. */
     getParent(path: string): string | undefined;
 
+    /** Gets the path of a file or folder with a given parent and name. */
+    getChild(parent: string, name: string): string;
+
     /** Checks if the file or folder at a path exists. */
     exists(path: string): boolean;
 
@@ -48,16 +51,13 @@ export interface FileSystem<T> {
     isFile(path: string): boolean;
 
     /** Gets contained files if path represents a folder and undefined otherwise. */
-    getFiles(path: string): string[] | undefined;
+    getChildren(path: string): string[] | undefined;
 
     /** Gets data of file if path represent a file and undefined otherwise. */
     getData(path: string): T | undefined;
 
 
     // FILE & FOLDER CREATION AND DELETION
-
-    /** Gets the path of a file or folder with a given parent and name. */
-    getPath(parent: string, name: string): string;
 
     /** Creates a folder at a path. */
     createFolder(path: string): boolean;

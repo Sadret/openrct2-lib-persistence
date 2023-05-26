@@ -72,6 +72,8 @@ export class JsonFileSystem<T> implements FileSystem<T> {
         Each file system is identified by its namespace, which must be a valid
         identifier using JS dot notation, e.g. "my-plugin.data" or
         "my-plugin.data.saves", but not just "my-plugin".
+        The namespace is the path in the plugin.store.json file under which the
+        filesystem will be saved.
     */
     public constructor(namespace: string) {
         this.namespace = namespace;
@@ -121,6 +123,10 @@ export class JsonFileSystem<T> implements FileSystem<T> {
         return idx < 0 ? undefined : path.slice(0, idx);
     }
 
+    public getChild(parent: string, name: string): string {
+        return parent + "." + encode(name);
+    }
+
     public exists(path: string): boolean {
         return has(this.getKey(path));
     };
@@ -139,7 +145,7 @@ export class JsonFileSystem<T> implements FileSystem<T> {
         return element !== undefined && element.type === "file";
     };
 
-    public getFiles(path: string): string[] | undefined {
+    public getChildren(path: string): string[] | undefined {
         if (!this.isFolder(path))
             return undefined;
 
@@ -163,10 +169,6 @@ export class JsonFileSystem<T> implements FileSystem<T> {
 
 
     // FILE & FOLDER CREATION AND DELETION
-
-    public getPath(parent: string, name: string): string {
-        return parent + "." + encode(name);
-    }
 
     public createFolder(path: string): boolean {
         if (this.exists(path))
@@ -227,7 +229,7 @@ export class JsonFileSystem<T> implements FileSystem<T> {
 
     public rename(path: string, name: string): boolean {
         const parent = this.getParent(path);
-        return parent !== undefined && this.move(path, this.getPath(parent, name));
+        return parent !== undefined && this.move(path, this.getChild(parent, name));
     }
 
     public setData(path: string, content: T): boolean {

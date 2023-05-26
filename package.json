@@ -5,13 +5,13 @@
     "version": "1.0.0",
     "license": "GPL-3.0",
     "type": "module",
-    "main": "./build/index.cjs.js",
-    "module": "./build/index.esm.js",
-    "browser": "./build/index.es5.js",
-    "types": "./build/index.d.ts",
+    "main": "./build/openrct2-lib-persistence.cjs.js",
+    "module": "./build/openrct2-lib-persistence.esm.js",
+    "browser": "./build/openrct2-lib-persistence.es5.js",
+    "types": "./build/openrct2-lib-persistence.d.ts",
     "exports": {
-        "require": "./build/index.cjs.js",
-        "import": "./build/index.esm.js"
+        "require": "./build/openrct2-lib-persistence.cjs.js",
+        "import": "./build/openrct2-lib-persistence.esm.js"
     },
     "files": [
         "./build/**/*"
