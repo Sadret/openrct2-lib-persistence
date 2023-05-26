@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2020-2022 Sadret
+ * Copyright (c) 2023 Sadret
  *
  * The OpenRCT2 plugin library "Persistence" is licensed
  * under the GNU General License version 3.
@@ -47,8 +47,8 @@ export interface FileSystem<T> {
     /** Checks if the path represents a file. */
     isFile(path: string): boolean;
 
-    /** Gets contained files if path represents a folder and [] otherwise. */
-    getFiles(path: string): string[];
+    /** Gets contained files if path represents a folder and undefined otherwise. */
+    getFiles(path: string): string[] | undefined;
 
     /** Gets data of file if path represent a file and undefined otherwise. */
     getData(path: string): T | undefined;

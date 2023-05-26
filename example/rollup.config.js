@@ -1,17 +1,12 @@
-import {
-	name,
-	version
-} from './package.json';
-
 import resolve from "@rollup/plugin-node-resolve";
-import terser from '@rollup/plugin-terser';
+import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 
 export default {
-	input: "./src/main.ts",
+	input: "./index.ts",
 	output: {
 		format: "iife",
-		file: `./build/${name}-${version}.js`,
+		file: `./build/openrct2-lib-persistence-example.js`,
 	},
 	plugins: [
 		resolve(),

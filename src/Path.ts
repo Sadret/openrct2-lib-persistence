@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2020-2022 Sadret
+ * Copyright (c) 2023 Sadret
  *
  * The OpenRCT2 plugin library "Persistence" is licensed
  * under the GNU General Public License version 3.
@@ -18,12 +18,24 @@ export class Path<T> {
     private readonly fs: FileSystem<T>;
 
     /** The path. */
-    public readonly path: string;
+    private readonly path: string;
 
     /** Construct a new Path on a file system with a given path. */
-    public constructor(fs: FileSystem<T>, path: string) {
+    private constructor(fs: FileSystem<T>, path: string) {
         this.fs = fs;
         this.path = path;
+    }
+
+    /** Returns the root of a file system as a path. */
+    public static getRoot<T>(fs: FileSystem<T>): Path<T> { return new Path(fs, fs.getRoot()); }
+
+    /** Checks if two paths are equal. */
+    public static equals(fst: Path<unknown> | undefined, snd: Path<unknown> | undefined): boolean {
+        if (fst === undefined && snd === undefined)
+            return true;
+        if (fst === undefined || snd === undefined)
+            return false;
+        return fst.path === snd.path;
     }
 
     /**
@@ -33,15 +45,6 @@ export class Path<T> {
     public formatPath(delimiter: string = "/"): string {
         const parent = this.getParent();
         return (parent ? parent.formatPath(delimiter) : "") + this.getName() + (this.isFolder() ? delimiter : "");
-    }
-
-    /** Checks if two paths are equal. **/
-    public static equals(fst: Path<unknown> | undefined, snd: Path<unknown> | undefined): boolean {
-        if (fst === undefined && snd === undefined)
-            return true;
-        if (fst === undefined || snd === undefined)
-            return false;
-        return fst.path === snd.path;
     }
 
 
@@ -56,6 +59,9 @@ export class Path<T> {
         return parent === undefined ? undefined : new Path(this.fs, parent);
     }
 
+    /** Gets the child path of a file or folder with the given name. */
+    public getChild(name: string): Path<T> { return new Path(this.fs, this.fs.getPath(this.path, name)); }
+
     /** Checks if the file or folder exists. */
     public exists(): boolean { return this.fs.exists(this.path); };
 
@@ -65,9 +71,10 @@ export class Path<T> {
     /** Checks if this path represents a file. */
     public isFile(): boolean { return this.fs.isFile(this.path); };
 
-    /** Gets contained files if this path represents a folder and [] otherwise. */
-    public getFiles(): Path<T>[] {
-        return this.fs.getFiles(this.path).map(path => new Path(this.fs, path));
+    /** Gets contained files if this path represents a folder and undefined otherwise. */
+    public getFiles(): Path<T>[] | undefined {
+        const files = this.fs.getFiles(this.path);
+        return files && files.map(path => new Path(this.fs, path));
     };
 
     /** Gets data of file if this path represent a file and undefined otherwise. */
@@ -93,6 +100,12 @@ export class Path<T> {
         const path = this.fs.getPath(this.path, name);
         return this.fs.createFile(path, content) ? new Path(this.fs, path) : undefined;
     };
+
+    /** Creates a folder at this path. */
+    public createFolder(): boolean { return this.fs.createFolder(this.path); }
+
+    /** Creates a file at this path with the given content. */
+    public createFile(content: T): boolean { return this.fs.createFile(this.path, content); }
 
     /** Deletes the file or folder. */
     public delete(): boolean { return this.fs.delete(this.path); };

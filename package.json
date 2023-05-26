@@ -1,18 +1,31 @@
 {
     "name": "openrct2-lib-persistence",
-    "version": "1.0.0",
     "description": "OpenRCT2 Plug-In Persistence Library",
     "author": "Sadret",
+    "version": "1.0.0",
     "license": "GPL-3.0",
+    "type": "module",
+    "main": "./build/index.cjs.js",
+    "module": "./build/index.esm.js",
+    "browser": "./build/index.es5.js",
+    "types": "./build/index.d.ts",
+    "exports": {
+        "require": "./build/index.cjs.js",
+        "import": "./build/index.esm.js"
+    },
+    "files": [
+        "./build/**/*"
+    ],
     "scripts": {
-        "build-develop": "rollup -c rollup.config.develop.js",
-        "build-release": "rollup -c rollup.config.release.js"
+        "build": "rollup -c rollup.config.js"
     },
     "devDependencies": {
-        "@rollup/plugin-typescript": "^8.2.5",
-        "rollup": "^2.55.1",
-        "rollup-plugin-terser": "^7.0.2",
-        "tslib": "^2.3.0",
-        "typescript": "^4.3.5"
+        "@rollup/plugin-node-resolve": "^15.0.1",
+        "@rollup/plugin-terser": "^0.4.0",
+        "@rollup/plugin-typescript": "^11.1.1",
+        "rollup": "^3.17.2",
+        "rollup-plugin-dts": "^5.2.0",
+        "tslib": "^2.5.2",
+        "typescript": "^5.0.4"
     }
 }

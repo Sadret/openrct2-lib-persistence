@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2020-2022 Sadret
+ * Copyright (c) 2023 Sadret
  *
  * The OpenRCT2 plugin library "Persistence" is licensed
  * under the GNU General Public License version 3.
@@ -63,32 +63,33 @@ interface StorageFile<T> {
 
 type StorageElement<T> = StorageFolder<T> | StorageFile<T>;
 
-/**
-    Implements a file system that stores the files in the shared plugin storage.
-    Each file system is identified by its namespace, which must be a valid
-    identifier using JS dot notation, e.g. "my-plugin.data".
-*/
+/** Implements a file system that stores the data in the shared plugin storage. */
 export class JsonFileSystem<T> implements FileSystem<T> {
     private readonly namespace: string;
 
-    /** Construct a new JsonFileSystem with a given namespace. */
+    /**
+        Constructs a new JsonFileSystem with a given namespace.
+        Each file system is identified by its namespace, which must be a valid
+        identifier using JS dot notation, e.g. "my-plugin.data" or
+        "my-plugin.data.saves", but not just "my-plugin".
+    */
     public constructor(namespace: string) {
         this.namespace = namespace;
     }
 
     // CONFIG HELPER METHODS
 
-    private getKey(file: string): string {
-        return this.namespace + file.replace(/\./g, ".files.");
+    private getKey(path: string): string {
+        return this.namespace + path.replace(/\./g, ".files.");
     }
 
-    private getElement<S extends StorageElement<T>>(file: string): S | undefined {
-        return get<S>(this.getKey(file));
+    private getElement<S extends StorageElement<T>>(path: string): S | undefined {
+        return get<S>(this.getKey(path));
     }
 
-    private setElement<S extends StorageElement<T> | undefined>(file: string, element: S): void {
-        set<S>(this.getKey(file), element);
-        this.watchers.forEach(watcher => watcher(file));
+    private setElement<S extends StorageElement<T> | undefined>(path: string, element: S): void {
+        set<S>(this.getKey(path), element);
+        this.watchers.forEach(watcher => watcher(path));
     }
 
     // GENERAL FILE SYSTEM METHODS
@@ -108,61 +109,55 @@ export class JsonFileSystem<T> implements FileSystem<T> {
         };
     }
 
-    /** Deletes all files and folders of the file system. */
-    public purge(): void {
-        set(this.namespace, undefined);
-        this.getRoot();
-    }
-
 
     // FILE & FOLDER INFORMATION
 
-    public getName(file: string): string {
-        return decode(file.slice(file.lastIndexOf(".") + 1));
+    public getName(path: string): string {
+        return decode(path.slice(path.lastIndexOf(".") + 1));
     }
 
-    public getParent(file: string): string | undefined {
-        const idx = file.lastIndexOf(".");
-        return idx < 0 ? undefined : file.slice(0, idx);
+    public getParent(path: string): string | undefined {
+        const idx = path.lastIndexOf(".");
+        return idx < 0 ? undefined : path.slice(0, idx);
     }
 
-    public exists(file: string): boolean {
-        return has(this.getKey(file));
+    public exists(path: string): boolean {
+        return has(this.getKey(path));
     };
 
-    public isFolder(file: string): boolean {
-        if (!this.exists(file))
+    public isFolder(path: string): boolean {
+        if (!this.exists(path))
             return false;
-        const element = this.getElement<StorageElement<T>>(file);
+        const element = this.getElement<StorageElement<T>>(path);
         return element !== undefined && element.type === "folder";
     };
 
-    public isFile(file: string): boolean {
-        if (!this.exists(file))
+    public isFile(path: string): boolean {
+        if (!this.exists(path))
             return false;
-        const element = this.getElement<StorageElement<T>>(file);
+        const element = this.getElement<StorageElement<T>>(path);
         return element !== undefined && element.type === "file";
     };
 
-    public getFiles(file: string): string[] {
-        if (!this.isFolder(file))
-            return [];
+    public getFiles(path: string): string[] | undefined {
+        if (!this.isFolder(path))
+            return undefined;
 
-        const element = this.getElement<StorageFolder<T>>(file);
+        const element = this.getElement<StorageFolder<T>>(path);
         if (element === undefined)
-            return [];
+            return undefined;
 
         const result = [] as string[];
         for (const name in element.files)
-            result.push(file + "." + name);
+            result.push(path + "." + name);
         return result;
     };
 
-    public getData(file: string): T | undefined {
-        if (!this.isFile(file))
+    public getData(path: string): T | undefined {
+        if (!this.isFile(path))
             return undefined;
 
-        const element = this.getElement<StorageFile<T>>(file);
+        const element = this.getElement<StorageFile<T>>(path);
         return element && element.content;
     };
 
@@ -173,39 +168,39 @@ export class JsonFileSystem<T> implements FileSystem<T> {
         return parent + "." + encode(name);
     }
 
-    public createFolder(file: string): boolean {
-        if (this.exists(file))
+    public createFolder(path: string): boolean {
+        if (this.exists(path))
             return false;
 
-        const parent = this.getParent(file);
+        const parent = this.getParent(path);
         parent && this.createFolder(parent);
 
-        this.setElement<StorageFolder<T>>(file, {
+        this.setElement<StorageFolder<T>>(path, {
             type: "folder",
             files: {},
         });
         return true;
     };
 
-    public createFile(file: string, content: T): boolean {
-        if (this.exists(file))
+    public createFile(path: string, content: T): boolean {
+        if (this.exists(path))
             return false;
 
-        const parent = this.getParent(file);
+        const parent = this.getParent(path);
         parent && this.createFolder(parent);
 
-        this.setElement<StorageFile<T>>(file, {
+        this.setElement<StorageFile<T>>(path, {
             type: "file",
             content: content,
         });
         return true;
     };
 
-    public delete(file: string): boolean {
-        if (!this.exists(file))
+    public delete(path: string): boolean {
+        if (!this.exists(path))
             return false;
 
-        this.setElement(file, undefined);
+        this.setElement(path, undefined);
         return true;
     };
 
@@ -230,16 +225,16 @@ export class JsonFileSystem<T> implements FileSystem<T> {
         return this.copy(src, dst) && this.delete(src);
     };
 
-    public rename(file: string, name: string): boolean {
-        const parent = this.getParent(file);
-        return parent !== undefined && this.move(file, this.getPath(parent, name));
+    public rename(path: string, name: string): boolean {
+        const parent = this.getParent(path);
+        return parent !== undefined && this.move(path, this.getPath(parent, name));
     }
 
-    public setData(file: string, content: T): boolean {
-        if (!this.isFile(file))
+    public setData(path: string, content: T): boolean {
+        if (!this.isFile(path))
             return false;
 
-        this.setElement<StorageFile<T>>(file, {
+        this.setElement<StorageFile<T>>(path, {
             type: "file",
             content: content,
         });
